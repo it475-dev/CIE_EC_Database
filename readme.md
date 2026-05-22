@@ -28,7 +28,7 @@ The `GUI/` directory contains a standalone HTML dashboard — **CIE Engineered C
 
 ### Data
 
-The `Data/` directory contains the Engineered Controls Database JSON file and the IDF Infrastructure Taxonomy file used to power the hierarchy browser. See `Data/README.md` for file format documentation.
+The `Data/` directory contains the Engineered Controls Database files used to power the hierarchy browser in addition to presentation materials for CIE Engineered Controls. See `Data/README.md` for file format documentation.
 
 ---
 
