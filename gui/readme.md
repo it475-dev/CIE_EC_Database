@@ -11,7 +11,7 @@ The CIE Engineered Controls Database catalogs physical and procedural controls t
 - A **resilience role** (e.g., Prevent impact, Accelerate recovery)
 - A **category** (e.g., Fail-safe default, Redundant physical+digital)
 - A **critical function** within a sector/subsector/asset scope
-- A **type** — either *Known in Use* (deployed in practice) or *Idea/Opportunity* (recommended but not yet standard)
+- A **type** — either *Known in Use* (deployed in practice) or *Idea/Opportunity* (possible but no evidence of use captured)
 
 The dashboard makes this 60,000+ entry database navigable, searchable, and analytically useful without requiring any software installation.
 
@@ -43,7 +43,7 @@ Live charts that update to reflect the current hierarchy selection and sidebar f
 - **Top 15 categories** — horizontal bar chart of most common control categories
 - **Resilience role distribution** — color-coded by role across the six CIE resilience stages
 - **Controls per scope** — breakdown among the direct children of the currently selected node (or all sectors at the top level), using fully recursive counts
-- **Known vs Ideas donut** — proportion of deployed vs. recommended controls
+- **Known vs Ideas donut** — proportion of known-in-use vs. potential for use (ideas) with no guarantee of use in a sector context.
 
 ### Filter Sidebar
 
@@ -81,7 +81,7 @@ Displays database metadata (program name, author, organization, contact) and a v
 
 ### 1. Open the dashboard
 
-Download `engineered_controls_v2.html` and open it directly in any modern browser. No web server is needed.
+Download `engineered_controls_dashboard.html` and open it directly in any modern browser. No web server is needed.
 
 Tested in Chrome 120+, Firefox 121+, Edge 120+, Safari 17+.
 
