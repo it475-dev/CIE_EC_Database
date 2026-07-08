@@ -223,6 +223,7 @@ tbody td{padding:6px 9px;font-size:13px;overflow:hidden;text-overflow:ellipsis;w
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (function(){
 var R=React,RD=ReactDOM;
@@ -432,6 +433,7 @@ function Upload(p){
     h("div",{className:"ucard"},
       h("h2",{className:"uh"},"Engineered Controls Explorer"),
       h("p",{className:"up"},"Load your controls database and optionally the IDF infrastructure taxonomy to unlock the full hierarchy browser with recursive counts."),
+      p.autoErr&&h("p",{style:{fontSize:12,color:"var(--c600)",background:"var(--c50)",border:"1px solid var(--c100)",borderRadius:7,padding:"8px 10px",marginBottom:10}},"Could not auto-load the bundled data files ("+p.autoErr+"). Please upload them manually below."),
       h("input",{ref:cfr,type:"file",accept:".json",onChange:function(e){readFile(e.target.files[0],"controls")},style:{display:"none"}}),
       h("input",{ref:tfr,type:"file",accept:".json",onChange:function(e){readFile(e.target.files[0],"taxonomy")},style:{display:"none"}}),
       h("div",{className:"uslots"},
@@ -802,6 +804,9 @@ function App(){
   // appData = {controls:[], tree:null, nodeCounts:null}
 
   var ls=us(false);var loading=ls[0],setLoad=ls[1];
+  // Auto-load bundled data files (GitHub Pages friendly)
+  var als=us(true);var autoLoading=als[0],setAutoLoading=als[1];
+  var aes=us("");var autoErr=aes[0],setAutoErr=aes[1];
 
   // UI state
   var qs=us("");var search=qs[0],setSearch=qs[1];
@@ -845,6 +850,50 @@ function App(){
     setAppData(function(d){return{controls:d.controls,tree:tree,nodeCounts:nodeCounts,ctrlsMeta:d.ctrlsMeta};});
   }
 
+  // Automatically load the bundled controls DB (engctrls-V2_JSON.zip) and IDF taxonomy (idf.min.json) on first mount.
+  ue(function(){
+    var cancelled=false;
+    // Paths are relative to this HTML file (gui/), so they work on GitHub Pages.
+    var TAX_URL="idf.min.json";
+    var ZIP_URL="../data/engctrls-V2_JSON.zip";
+    var ZIP_ENTRY="engctrls-V2.json";
+
+    function fetchTaxonomy(){
+      return fetch(TAX_URL).then(function(r){
+        if(!r.ok)throw new Error("Could not load "+TAX_URL+" ("+r.status+")");
+        return r.json();
+      });
+    }
+    function fetchControls(){
+      if(typeof JSZip==="undefined")return Promise.reject(new Error("JSZip library failed to load"));
+      return fetch(ZIP_URL).then(function(r){
+        if(!r.ok)throw new Error("Could not load "+ZIP_URL+" ("+r.status+")");
+        return r.arrayBuffer();
+      }).then(function(buf){
+        return JSZip.loadAsync(buf);
+      }).then(function(zip){
+        var entry=zip.file(ZIP_ENTRY);
+        if(!entry)throw new Error(ZIP_ENTRY+" not found inside the archive");
+        return entry.async("string");
+      }).then(function(txt){
+        return JSON.parse(txt);
+      });
+    }
+
+    Promise.all([fetchControls(),fetchTaxonomy()]).then(function(res){
+      if(cancelled)return;
+      setAutoLoading(false);
+      onLoad(res[0],res[1]);
+    }).catch(function(err){
+      if(cancelled)return;
+      console.warn("Auto-load failed, falling back to manual upload:",err);
+      setAutoErr(err&&err.message?err.message:String(err));
+      setAutoLoading(false);
+    });
+
+    return function(){cancelled=true;};
+  },[]);
+
   function sf(k,v){setFilt(function(f){var n={};Object.keys(f).forEach(function(kk){n[kk]=f[kk]});n[k]=v;return n});}
   function ca(){setFilt({type:"",level:"",role:"",pri:"",failsafe:""});setSearch("");}
 
@@ -875,8 +924,9 @@ function App(){
     return mkAnalytics(filtered,appData.tree,appData.nodeCounts,path);
   },[filtered,appData,path]);
 
+  if(autoLoading&&!appData)return h("div",{className:"loading"},"Loading engineered controls database, please wait...");
   if(loading)return h("div",{className:"loading"},"Parsing and building hierarchy, please wait...");
-  if(!appData)return h(Upload,{onLoad:onLoad});
+  if(!appData)return h(Upload,{onLoad:onLoad,autoErr:autoErr});
 
   var hasTax=appData.tree!=null;
   var meta=appData.ctrlsMeta;
